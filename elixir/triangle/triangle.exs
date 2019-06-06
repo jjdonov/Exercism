@@ -23,6 +23,10 @@ defmodule Triangle do
   defp non_positive?(a, b, c), do: non_positive?([a, b, c])
   defp non_positive?(sides), do: Enum.any?(sides, fn s -> s <= 0 end)
 
+  @doc """
+  Note: there is an issue with the tests for this function. (they are potentially wrong).
+  Please see https://github.com/exercism/elixir/issues/106 for more detail.
+  """
   defp violates_ineq?(a, b, c) when a + b < c, do: true
   defp violates_ineq?(a, b, c) when a + c < b, do: true
   defp violates_ineq?(a, b, c) when b + c < a, do: true
