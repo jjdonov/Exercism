@@ -2,6 +2,13 @@ defmodule RobotSimulator do
   defstruct direction: nil, position: nil
 
   @directions [:north, :south, :east, :west]
+
+  defguard is_direction(direction) when direction in @directions
+
+  defguard is_position(position)
+           when is_tuple(position) and tuple_size(position) == 2 and is_integer(elem(position, 0)) and
+                  is_integer(elem(position, 1))
+
   @doc """
   Create a Robot Simulator given an initial direction and position.
 
@@ -9,12 +16,18 @@ defmodule RobotSimulator do
   """
   @spec create(direction :: atom, position :: {integer, integer}) :: any
   def create(direction \\ :north, position \\ {0, 0})
-  def create(direction, position = {x, y}) when direction in @directions and is_integer(x) and is_integer(y) do
-    %RobotSimulator{direction: direction, position: position}
+
+  def create(direction, _) when not is_direction(direction) do
+    {:error, "invalid direction"}
   end
 
-  def create(direction, _) when direction in @directions, do: {:error, "invalid position"}
-  def create(_, _), do: {:error, "invalid direction"}
+  def create(_, position) when not is_position(position) do
+    {:error, "invalid position"}
+  end
+
+  def create(direction, position) do
+    %RobotSimulator{direction: direction, position: position}
+  end
 
   @doc """
   Simulate the robot's movement given a string of instructions.
@@ -27,51 +40,65 @@ defmodule RobotSimulator do
   end
 
   def simulate(robot, []) do
-   robot 
+    robot
   end
 
-  def simulate(robot = %RobotSimulator{direction: direction}, ["L"|instructions]) do
-    new_direction = case direction do
-      :north ->
-        :west
-      :west ->
-        :south
-      :south ->
-        :east
-      :east ->
-        :north
-    end
+  def simulate(robot = %RobotSimulator{direction: direction}, ["L" | instructions]) do
+    new_direction =
+      case direction do
+        :north ->
+          :west
+
+        :west ->
+          :south
+
+        :south ->
+          :east
+
+        :east ->
+          :north
+      end
 
     simulate(%RobotSimulator{robot | direction: new_direction}, instructions)
   end
 
-  def simulate(robot = %RobotSimulator{direction: direction}, ["R"|instructions]) do
-    new_direction = case direction do
-      :north ->
-        :east
-      :east ->
-        :south
-      :south ->
-        :west
-      :west ->
-        :north
-    end
+  def simulate(robot = %RobotSimulator{direction: direction}, ["R" | instructions]) do
+    new_direction =
+      case direction do
+        :north ->
+          :east
+
+        :east ->
+          :south
+
+        :south ->
+          :west
+
+        :west ->
+          :north
+      end
 
     simulate(%RobotSimulator{robot | direction: new_direction}, instructions)
   end
 
-  def simulate(robot = %RobotSimulator{direction: direction, position: {x, y}}, ["A"|instructions]) do
-    new_position = case direction do
-      :north ->
-        {x, y + 1}
-      :east ->
-        {x + 1, y}
-      :south ->
-        {x, y - 1}
-      :west ->
-        {x - 1, y}
-    end
-    
+  def simulate(robot = %RobotSimulator{direction: direction, position: {x, y}}, [
+        "A" | instructions
+      ]) do
+    new_position =
+      case direction do
+        :north ->
+          {x, y + 1}
+
+        :east ->
+          {x + 1, y}
+
+        :south ->
+          {x, y - 1}
+
+        :west ->
+          {x - 1, y}
+      end
+
     simulate(%RobotSimulator{robot | position: new_position}, instructions)
   end
 
@@ -83,15 +110,15 @@ defmodule RobotSimulator do
   Valid directions are: `:north`, `:east`, `:south`, `:west`
   """
   @spec direction(robot :: any) :: atom
-  def direction(robot) do
-    robot.direction
+  def direction(%RobotSimulator{direction: direction}) do
+    direction
   end
 
   @doc """
   Return the robot's position.
   """
   @spec position(robot :: any) :: {integer, integer}
-  def position(robot) do
-    robot.position
+  def position(%RobotSimulator{position: position}) do
+    position
   end
 end
