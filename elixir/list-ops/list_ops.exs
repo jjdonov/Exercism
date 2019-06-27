@@ -6,28 +6,25 @@ defmodule ListOps do
   # `++`, `--`, `hd`, `tl`, `in`, and `length`.
 
   @spec count(list) :: non_neg_integer
-  def count([_ | ls]), do: 1 + count(ls)
-  def count([]), do: 0
+  def count(l), do: reduce(l, 0, fn _, acc -> 1 + acc end)
 
   @spec reverse(list) :: list
-  def reverse(l), do: do_reverse(l)
-
-  defp do_reverse(l, acc \\ [])
-  defp do_reverse([l | ls], acc), do: do_reverse(ls, [l | acc])
-  defp do_reverse([], acc), do: acc
+  def reverse(l), do: reduce(l, [], fn next, acc -> [next | acc] end)
 
   @spec map(list, (any -> any)) :: list
   def map(l, f) do
-    for element <- l do
-      f.(element)
-    end
+    reduce_right(l, [], fn next, acc -> [f.(next) | acc] end)
   end
 
   @spec filter(list, (any -> as_boolean(term))) :: list
   def filter(l, f) do
-    for element <- l, f.(element) do
-      element
-    end
+    reduce_right(l, [], fn next, acc -> 
+      if f.(next) do
+        [next | acc]
+      else 
+        acc
+      end
+    end)
   end
 
   @type acc :: any
@@ -39,11 +36,15 @@ defmodule ListOps do
 
   def reduce([], acc, _), do: acc
 
+  def reduce_right(l, acc, f), do: reverse(l) |> reduce(acc, f)
+
   @spec append(list, list) :: list
-  def append([l | ls], b), do: [l | append(ls, b)]
-  def append([], b), do: b
+  def append(ls, ks) do
+    reduce_right(ls, ks, fn next, acc -> [next | acc ] end)
+  end
 
   @spec concat([[any]]) :: [any]
-  def concat([l | ls]), do: append(l, concat(ls))
-  def concat([]), do: []
+  def concat(lists) do
+    reduce_right(lists, [], &append/2)
+  end
 end
